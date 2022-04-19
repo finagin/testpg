@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+
+function ping($host, $port): bool
+{
+    $fp = @fsockopen($host, $port, $error_code, $error_message, 10);
+
+    if (! $fp) {
+        throw new RuntimeException($error_message, $error_code);
+    }
+
+    fclose($fp);
+
+    return true;
+}
+
+function pdo($host, $port, $database, $username, $password): PDO
+{
+    $dsn = sprintf(
+        'pgsql:dbname=%s;host=%s;port=%s',
+        $database,
+        $host,
+        $port
+    );
+
+    return new PDO(
+        $dsn,
+        $username,
+        $password,
+        [
+            PDO::ATTR_TIMEOUT => 15,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        ]
+    );
+}
+
+$hosts = explode(',', getenv('DB_HOST'));
+
+foreach ($hosts as $host) {
+    $pdo = [
+        $host,
+        getenv('DB_PORT'),
+        getenv('DB_DATABASE'),
+        getenv('DB_USERNAME'),
+        getenv('DB_PASSWORD'),
+    ];
+
+    try {
+        ping($host, getenv('DB_PORT'));
+
+        var_dump(pdo(...$pdo)->exec('select * from vote;'));
+    } catch (Throwable $e) {
+        echo sprintf("%s: %s\nWith args: %s\n\n",
+            str_pad($e->getCode(), 9, ' ', STR_PAD_LEFT),
+            $e->getMessage(),
+            implode(', ', $pdo)
+        );
+    }
+}
