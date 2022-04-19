@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  testpg:
+    image: finagin/testpg
+    build:
+      context: .
+      args:
+        DB_HOST: '${DB_HOST:-127.0.0.1}'
+        DB_PORT: '${DB_PORT:-5432}'
+        DB_DATABASE: '${DB_DATABASE:-postgres}'
+        DB_USERNAME: '${DB_USERNAME:-postgres}'
+        DB_PASSWORD: '${DB_PASSWORD}'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
